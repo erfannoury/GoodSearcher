@@ -27,3 +27,25 @@ class SetQueue(Queue):
         if item not in self.all_items:
             Queue._put(self, item)
             self.all_items.add(item)
+
+    def _get(self):
+        """
+        A thread-safe implementation override of dequeueing.
+        When queue pops an item, it is also removed from the set
+
+        """
+        item = Queue._get(self)
+        self.all_items.remove(item)
+        return item
+
+    def contains(self, item):
+        """
+        Attempt to implement thread-safety for contains method using Re-entrant locks.
+        ## I'm still not sure whether this implementation is correct.
+        """
+        lock = RLock()
+        isPresent = False
+        lock.acquire()
+        isPresent = item in self.all_items
+        lock.release()
+        return isPresent
