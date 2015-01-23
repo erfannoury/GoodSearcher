@@ -58,3 +58,6 @@ cran.index/
 
 # IPython
 .ipynb_checkpoints/
+
+# JSONs folder (crawl debris)
+JSONs/
