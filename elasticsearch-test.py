@@ -4,36 +4,39 @@ from elasticsearch_dsl.connections import connections
 import codecs
 import glob
 import json
+from prettyprint import pp
 
 
 class Book(document.DocType):
-    authors = field.Nested(properties={'name': field.String(),'url':field.String(index='not_analyzed')})
+    # authors = field.Nested(properties={'name': field.String(),'url':field.String(index='not_analyzed')})
+    authors_name = field.String()
+    authors_url = field.String(index='not_analyzed')
     average = field.Float()
     cover = field.String(index='not_analyzed')
     description = field.String()
-    # outlinks = Nested(properties={'outlink': String(index='not_analyzed')})
     outlinks = field.String(index='not_analyzed')
     ratings = field.Integer()
     reviews = field.Integer()
     title = field.String()
     url = field.String(index='not_analyzed')
-    userreviews = field.Nested(properties={'userName': field.String(), 'userReview': field.String(), 'userReviewDate': field.String(index='not_analyzed'), 'userURL': field.String(index='not_analyzed')})
+    # userreviews = field.Nested(properties={'userName': field.String(), 'userReview': field.String(), 'userReviewDate': field.String(index='not_analyzed'), 'userURL': field.String(index='not_analyzed')})
+    userreviews_userName = field.String()
+    userreviews_userReview = field.String()
+    userreviews_userReviewDate = field.String(index='not_analyzed')
+    userreviews_userURL = field.String(index='not_analyzed')
+
+    def add_authors(self, authors):
+        self.authors_name = [author['name'] for author in authors]
+        self.authors_url = [author['url'] for author in authors]
+    def add_userreviews(self, reviews):
+        self.userreviews_userName = [rev['userName'] for rev in reviews]
+        self.userreviews_userReview = [rev['userReview'] for rev in reviews]
+        self.userreviews_userReviewDate = [rev['userReviewDate'] for rev in reviews]
+        self.userreviews_userURL = [rev['userURL'] for rev in reviews]
 
     class Meta:
         doc_type = 'book'
         index = 'book-index'
-
-    def add_author(self, name, url):
-        self.authors.append({'name': name, 'url': url})
-
-    def add_userreview(self, username, userreview, userreviewdate, userurl):
-        self.userreviews.append({'userName': username, 'userReview': userreview, 'userReviewDate': userreviewdate, 'userURL': userurl})
-
-    # def add_outlinks(self, outlink):
-    #     self.outlinks.append({'outlink': outlink})
-
-    # def save(self, ** kwargs):
-    #     return super().save(** kwargs)
 
 if __name__ == '__main__':
     es = Elasticsearch()
@@ -44,7 +47,7 @@ if __name__ == '__main__':
 
     all_json_dirs = glob.glob('JSONs/*.json')
     all_jsons = []
-    for jdir in all_json_dirs:
+    for jdir in all_json_dirs[:10]:
         with open(jdir, 'r') as f:
             jsn = json.load(f)
             all_jsons.append(jsn)
@@ -53,11 +56,11 @@ if __name__ == '__main__':
     Book.init('book-index')
     for idx, js in enumerate(all_jsons):
         book = Book(average=js['average'], cover=js['cover'], description=js['description'].encode('utf-8'), ratings=js['ratings'], reviews=js['reviews'], title=js['title'], url=js['url'], outlinks=js['outlinks'])
-        for author in js['authors']:
-            book.add_author(author['name'], author['url'])
-
-        for userrev in js['userreviews']:
-            book.add_userreview(userrev['userName'], userrev['userReview'], userrev['userReviewDate'], userrev['userURL'])
+        book.add_authors(js['authors'])
+        book.add_userreviews(js['userreviews'])
+        # book.authors_url = authors_urls
+        # for userrev in js['userreviews']:
+        #     book.add_userreview(userrev['userName'], userrev['userReview'], userrev['userReviewDate'], userrev['userURL'])
         book.id = idx
         book.save()
 
@@ -66,7 +69,8 @@ if __name__ == '__main__':
 
 
 
-    s = Search(es).index('book-index').doc_type('book').query("match", description='prince')
+    # s = Search(es).index('book-index').doc_type('book').query("match", description='prince')
+    s = Search(es).index('book-index').doc_type('book')
 
     response = s.execute()
     print response.success(), response.hits.total
@@ -74,6 +78,9 @@ if __name__ == '__main__':
         print res._meta.score
         print res.title
         print res.description.encode('utf-8')
+        # pp(res.outlinks)
+        pp(res.userreviews_userName)
+        pp(res.userreviews_userReview)
         print ''
 
     # print response.to_dict()
