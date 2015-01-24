@@ -2,7 +2,7 @@ import json
 import glob
 import numpy as np
 import prettyprint as pp
-from PageRank import Normalize, PageRankScore
+from PageRank import Normalize, PageRankScores
 from booktype import Book
 from elasticsearch import Elasticsearch
 from elasticsearch_dsl import Search, document, field, connections, Q
