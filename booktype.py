@@ -1,3 +1,5 @@
+from elasticsearch_dsl import document, field
+
 class Book(document.DocType):
     """
     This is the document type class for objects of type book for using with Elasticsearch DSL using Python
