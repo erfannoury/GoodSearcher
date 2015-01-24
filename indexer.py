@@ -3,6 +3,12 @@ import glob
 import numpy as np
 import prettyprint as pp
 from PageRank import Normalize, PageRankScore
+from booktype import Book
+from elasticsearch import Elasticsearch
+from elasticsearch_dsl import Search, document, field, connections, Q
+from elasticsearch_dsl.connections import connections
+import codecs
+
 
 
 
@@ -44,26 +50,45 @@ def main():
         js["index"] = links.index(js["url"])
     print 'a mapping from documents to the list of links created.'
 
+    ## if user has selected to index documents using Elasticsearch
+    # Note that when using Elasticsearch, page rank is ignored
+    if use_elasticsearch:
+        print 'Using Elasticsearch for indexing, PageRank is ignored'
+        es = Elasticsearch()
+        es.indices.create(index='book-index', ignore=[400, 404])
+        connections.create_connection(hosts=['localhost'], timeout=20)
+        connections.add_connection('book', es)
+        Book.init('book-index')
 
-    ## if user has selected to calculate the PageRank
-    if calculate_PageRank:
-        # now creating the unnormalized adjacency matrix
-        print 'creating the unnormalized adjacency matrix.'
-        adjacency = np.zeros((len(links_set), len(links_set)))
-        for js in jsons:
-            node_idx = links.index(js["url"])
-            for l in js["outlinks"]:
-                out_idx = links.index(l)
-                adjacency[node_idx, out_idx] += 1
-        print 'the unnormalized adjacency matrix created.'
+        ## adding all document to the index 'book-index'
+        for idx, js in enumerate(jsons):
+            book = Book(average=js['average'], cover=js['cover'], description=js['description'].encode('utf-8'), ratings=js['ratings'], reviews=js['reviews'], title=js['title'], url=js['url'], outlinks=js['outlinks'])
+            book.add_authors(js['authors'])
+            book.add_userreviews(js['userreviews'])
+            book.id = idx
+            book.save()
+        print 'Elasticsearch index created'
+    ### use pyLucene instead
+    else:
+        print 'Using Lucene for indexing'
+        ## if user has selected to calculate the PageRank
+        if calculate_PageRank:
+            # now creating the unnormalized adjacency matrix
+            print 'creating the unnormalized adjacency matrix.'
+            adjacency = np.zeros((len(links_set), len(links_set)))
+            for js in jsons:
+                node_idx = links.index(js["url"])
+                for l in js["outlinks"]:
+                    out_idx = links.index(l)
+                    adjacency[node_idx, out_idx] += 1
+            print 'the unnormalized adjacency matrix created.'
 
-        print 'normalizing the adjacency matrix with teleporting constant value of ', tele_const
-        norm_mat = Normalize(adjacency, tele_const)
-        print 'calculating the PageRank scores'
-        pr_scores = PageRankScore(norm_mat)
+            print 'normalizing the adjacency matrix with teleporting constant value of ', tele_const
+            norm_mat = Normalize(adjacency, tele_const)
+            print 'calculating the PageRank scores'
+            pr_scores = PageRankScore(norm_mat)
 
-        print 'document \"', 
-
+            ## here goes the pyLucene code, which means I should swith to the damn Ubuntu
 
 
 
