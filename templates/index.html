@@ -1,0 +1,56 @@
+$def with(anses, query, num_pages)
+
+
+<!doctype HTML>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.2">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <title>GoodSearcher</title>
+
+    <link href="static/bootstrap/css/theme/flatly/bootstrap.css" rel="stylesheet">
+
+    <link href="static/bootstrap/css/jumbotron-narrow.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+    <div class="container">
+        <center>
+            <h1>GoodSearcher</h1>
+        </center>
+    </div>
+
+    <div class="container">
+        $for a in anses:
+            <div>
+                <h3><a href="$a['url']">$a['title']</a></h3>
+                <h4>by
+                    $for auth in a['authors']:
+                        <a href="$auth[1]">$auth[0]</a>,
+                </h4>
+                <center>
+                    <img src="$a['cover']" width="150", height="200"/>
+                </center>
+                <p>$a['description']</p>
+            </div>
+        <hr>
+    </div>
+    <div class="container">
+        <center>
+            $for i in range(num_pages):
+            <a href="/$query?page=$i">$i</a>
+        </center>
+    </div>
+
+
+
+<script src="static/jquery/jquery.js"></script>
+<script src="static/bootstrap/js/bootstrap.min.js"></script>
+
+</body>
+</html>
