@@ -186,7 +186,7 @@ class Scraper:
         """
         js = self.getJSON()
         filename = self.getTitle().decode('utf-8')
-        ignoreDict = {ord(c): None for c in (punctuation + digits + ' ')}
+        ignoreDict = {ord(c): None for c in (punctuation + digits + ' ' + '\n')}
         filename = filename.translate(ignoreDict)
         print 'writing json file: ', filename
         with open(os.path.join(addr, filename + '.json'), "w") as f:
