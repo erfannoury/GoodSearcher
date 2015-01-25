@@ -9,19 +9,6 @@ import argparse
 from PageRank import Normalize, PageRankScores
 from booktype import Book
 
-from elasticsearch import Elasticsearch
-from elasticsearch_dsl import Search, document, field, connections, Q
-from elasticsearch_dsl.connections import connections
-
-import lucene
-from java.io import File
-from org.apache.lucene.index import IndexWriterConfig, IndexWriter, FieldInfo
-from org.apache.lucene.document import Document, Field, FieldType, IntField, FloatField
-from org.apache.lucene.store import SimpleFSDirectory
-from org.apache.lucene.util import Version
-from org.apache.lucene.analysis.standard import StandardAnalyzer
-
-
 
 def main(use_elasticsearch = True, calculate_PageRank = False, tele_const = 0.2):
     """
@@ -53,6 +40,10 @@ def main(use_elasticsearch = True, calculate_PageRank = False, tele_const = 0.2)
     ## if user has selected to index documents using Elasticsearch
     # Note that when using Elasticsearch, page rank is ignored
     if use_elasticsearch:
+        from elasticsearch import Elasticsearch
+        from elasticsearch_dsl import Search, document, field, connections, Q
+        from elasticsearch_dsl.connections import connections
+
         print 'Using Elasticsearch for indexing, PageRank is ignored'
         es = Elasticsearch()
         es.indices.create(index='book-index', ignore=[400, 404])
@@ -71,6 +62,14 @@ def main(use_elasticsearch = True, calculate_PageRank = False, tele_const = 0.2)
 
     ### use pyLucene instead
     else:
+        import lucene
+        from java.io import File
+        from org.apache.lucene.index import IndexWriterConfig, IndexWriter, FieldInfo
+        from org.apache.lucene.document import Document, Field, FieldType, IntField, FloatField
+        from org.apache.lucene.store import SimpleFSDirectory
+        from org.apache.lucene.util import Version
+        from org.apache.lucene.analysis.standard import StandardAnalyzer
+
         print 'Using Lucene for indexing'
         ## if user has selected to calculate the PageRank
         if calculate_PageRank:
@@ -240,7 +239,7 @@ if __name__ == '__main__':
     parser.add_argument("-p", "--pagerank", action='store_true', help="Calculate PageRank score for documents and use this score in indexing. Ignored if Lucene isn't selected for indexing.")
     parser.add_argument("-t", "--teleporting", type=float, help="Teleporing constant (between 0 and 1). Ignored if Lucene isn't selected for indexing, or if user hasn't opted for use of PageRank scoring.")
     args = parser.parse_args()
-    args.print_help()
+    parser.print_help()
     if not args.lucene:
         main(use_elasticsearch = True)
     else:
@@ -251,4 +250,3 @@ if __name__ == '__main__':
                 main(use_elasticsearch=False, calculate_PageRank=True)
         else:
             main(use_elasticsearch=False, calculate_PageRank=False)
-    args.print_help()
