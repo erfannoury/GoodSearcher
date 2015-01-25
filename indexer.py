@@ -4,6 +4,7 @@ import numpy as np
 import prettyprint as pp
 import codecs
 import os
+import argparse
 
 from PageRank import Normalize, PageRankScores
 from booktype import Book
@@ -22,16 +23,10 @@ from org.apache.lucene.analysis.standard import StandardAnalyzer
 
 
 
-def main():
+def main(use_elasticsearch = True, calculate_PageRank = False, tele_const = 0.2):
     """
-    main entry for the indexer part.
+    main entry for the indexer module.
     """
-    ##############################
-    calculate_PageRank = False
-    use_elasticsearch = False
-    tele_const = 0.2
-    ##############################
-
     jsons_root_dir = 'JSONs/'
 
     # list of addresses of all json files
@@ -55,11 +50,6 @@ def main():
     print len(links_set), ' links found'
     links = list(links_set)
 
-    # creating an inverted mapping from documents to the list of links
-    for js in jsons:
-        js["index"] = links.index(js["url"])
-    print 'a mapping from documents to the list of links created.'
-
     ## if user has selected to index documents using Elasticsearch
     # Note that when using Elasticsearch, page rank is ignored
     if use_elasticsearch:
@@ -78,6 +68,7 @@ def main():
             book.id = idx
             book.save()
         print 'Elasticsearch index created'
+
     ### use pyLucene instead
     else:
         print 'Using Lucene for indexing'
@@ -244,4 +235,20 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-l", "--lucene", action='store_true', help="Use Lucene for indexing instead of Elasticsearch.")
+    parser.add_argument("-p", "--pagerank", action='store_true', help="Calculate PageRank score for documents and use this score in indexing. Ignored if Lucene isn't selected for indexing.")
+    parser.add_argument("-t", "--teleporting", type=float, help="Teleporing constant (between 0 and 1). Ignored if Lucene isn't selected for indexing, or if user hasn't opted for use of PageRank scoring.")
+    args = parser.parse_args()
+    args.print_help()
+    if not args.lucene:
+        main(use_elasticsearch = True)
+    else:
+        if args.pagerank:
+            if args.teleporting:
+                main(use_elasticsearch=False, calculate_PageRank=True, tele_const=args.teleporting)
+            else:
+                main(use_elasticsearch=False, calculate_PageRank=True)
+        else:
+            main(use_elasticsearch=False, calculate_PageRank=False)
+    args.print_help()
