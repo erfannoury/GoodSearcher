@@ -37,7 +37,7 @@ class index:
             connections.create_connection(hosts=['localhost'], timeout=20)
             connections.add_connection('book', es)
             # print(connections.get_connection().cluster.health())
-            s = Search(es).index('book-index').doc_type('book').query(Q('match', title=query.strip()) | Q('match', description=query.strip()))
+            s = Search(es).index('book-index').doc_type('book').query(Q('match', title=query.strip()) | Q('match', description=query.strip()) | Q("match", userreviews_userReview=query.strip()))
             ## This damn statement took half an hour from me! Nowhere in the documentation indicated that this statement should be before s.execute()
             s = s[page*10 : page * 10 + 10]
             response = s.execute()
